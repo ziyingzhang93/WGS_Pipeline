@@ -856,8 +856,45 @@ patient1,tumor_sample,lane1,tumor_R1.fastq.gz,tumor_R2.fastq.gz,1</code></pre>
   -resume</code></pre>
 
 <h3>Quick test with small dataset</h3>
-<div class="cn">用小数据集快速测试</div>
-<pre><code>nextflow run nf-core/sarek -profile docker,test</code></pre>
+<div class="cn">用小数据集快速测试 — sarek 自带多套测试数据，会自动下载一小段染色体区域跑完整流程，验证环境是否配置正确。</div>
+
+<table>
+  <tr>
+    <th>Test profile</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><code>-profile test</code></td>
+    <td>Basic germline test with minimal data (fastest)
+      <div class="cn-inline">基础 germline 测试，最小数据集（最快）</div></td>
+  </tr>
+  <tr>
+    <td><code>-profile test_full</code></td>
+    <td>Full data test (takes longer, more thorough)
+      <div class="cn-inline">完整数据测试（耗时较长，更全面）</div></td>
+  </tr>
+  <tr>
+    <td><code>-profile test_full_germline</code></td>
+    <td>Full germline pipeline test
+      <div class="cn-inline">完整 germline 流程测试</div></td>
+  </tr>
+  <tr>
+    <td><code>-profile test_mutect2</code></td>
+    <td>Somatic Mutect2 pipeline test (tumor-normal)
+      <div class="cn-inline">体细胞 Mutect2 流程测试（肿瘤-正常配对）</div></td>
+  </tr>
+</table>
+
+<pre><code># Basic test — verify your environment is set up correctly
+# 基础测试 — 验证环境配置是否正确
+nextflow run nf-core/sarek -profile docker,test
+
+# Somatic test — verify tumor-normal calling works
+# 体细胞测试 — 验证肿瘤-正常配对分析是否正常
+nextflow run nf-core/sarek -profile docker,test_mutect2</code></pre>
+
+<p>Test config files are located at <code>conf/test.config</code>, <code>conf/test_full.config</code>, etc. They define download URLs for test data and parameter overrides.</p>
+<div class="cn">测试配置文件位于 <code>conf/test.config</code>、<code>conf/test_full.config</code> 等，里面定义了测试数据的下载地址和参数覆盖。</div>
 
 <hr>
 
