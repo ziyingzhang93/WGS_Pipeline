@@ -833,6 +833,14 @@ alt:  A T G C <strong>T C</strong> C G  ← insertion of TC</code></pre>
 
 <h3>Somatic Paired Analysis (cancer)</h3>
 <div class="cn">配对体细胞分析（癌症）</div>
+
+<p><strong>Samplesheet format</strong> — use <code>status</code> column to indicate normal (0) vs tumor (1). Samples are paired automatically by <code>patient</code> ID.</p>
+<div class="cn">Samplesheet 格式 — 用 <code>status</code> 列标注正常组织（0）和肿瘤组织（1）。流程会自动按 <code>patient</code> ID 配对。</div>
+
+<pre><code>patient,sample,lane,fastq_1,fastq_2,status
+patient1,normal_sample,lane1,normal_R1.fastq.gz,normal_R2.fastq.gz,0
+patient1,tumor_sample,lane1,tumor_R1.fastq.gz,tumor_R2.fastq.gz,1</code></pre>
+
 <pre><code>nextflow run nf-core/sarek \
   --input samplesheet.csv \
   --genome GATK.GRCh38 \
