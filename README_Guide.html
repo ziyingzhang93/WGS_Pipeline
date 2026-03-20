@@ -831,6 +831,19 @@ alt:  A T G C <strong>T C</strong> C G  ← insertion of TC</code></pre>
   --outdir results/ \
   -profile docker</code></pre>
 
+<h3>WES — Whole Exome Sequencing</h3>
+<div class="cn">全外显子组测序 — 只需加 <code>--wes</code> 和 <code>--intervals</code> 参数，其余与 WGS 完全一致。</div>
+<pre><code>nextflow run nf-core/sarek \
+  --input samplesheet.csv \
+  --genome GATK.GRCh38 \
+  --wes \
+  --intervals targets.bed \
+  --tools haplotypecaller,vep \
+  --outdir results/ \
+  -profile docker</code></pre>
+<p>The <code>--intervals</code> BED file must match your capture kit (e.g., Agilent SureSelect V7, IDT xGen v2, Twist Core Exome).</p>
+<div class="cn"><code>--intervals</code> BED 文件必须与你的 capture kit 一致（如 Agilent SureSelect V7、IDT xGen v2、Twist Core Exome）。</div>
+
 <h3>Somatic Paired Analysis (cancer)</h3>
 <div class="cn">配对体细胞分析（癌症）</div>
 
@@ -895,6 +908,173 @@ nextflow run nf-core/sarek -profile docker,test_mutect2</code></pre>
 
 <p>Test config files are located at <code>conf/test.config</code>, <code>conf/test_full.config</code>, etc. They define download URLs for test data and parameter overrides.</p>
 <div class="cn">测试配置文件位于 <code>conf/test.config</code>、<code>conf/test_full.config</code> 等，里面定义了测试数据的下载地址和参数覆盖。</div>
+
+<hr>
+
+<h2 id="wgs-vs-wes">10. WGS vs WES — Key Differences</h2>
+<div class="cn">WGS 与 WES 关键区别 — 两者共用同一个 sarek 流程，核心差异在于 WES 只测外显子区域，需要指定 capture 区间。</div>
+
+<h3>Side-by-Side Comparison</h3>
+<div class="cn">对比总览</div>
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>WGS</th>
+    <th>WES</th>
+  </tr>
+  <tr>
+    <td>Coverage region</td>
+    <td>Entire genome (~3.2 Gb)
+      <div class="cn-inline">全基因组 (~3.2 Gb)</div></td>
+    <td>Exonic regions only (~30-60 Mb, ~1-2% of genome)
+      <div class="cn-inline">仅外显子区域 (~30-60 Mb，占基因组 ~1-2%)</div></td>
+  </tr>
+  <tr>
+    <td>Typical depth</td>
+    <td>30-60×</td>
+    <td>100-200×</td>
+  </tr>
+  <tr>
+    <td>Data size / sample</td>
+    <td>~90 GB (30×)</td>
+    <td>~6-8 GB (100×)</td>
+  </tr>
+  <tr>
+    <td>Cost / sample</td>
+    <td>~$300-500</td>
+    <td>~$100-150</td>
+  </tr>
+  <tr>
+    <td>BED interval file</td>
+    <td>Not required</td>
+    <td><strong>Required</strong> — must match your capture kit
+      <div class="cn-inline"><strong>必须提供</strong> — 必须匹配你的 capture kit</div></td>
+  </tr>
+  <tr>
+    <td>Non-coding variants</td>
+    <td>✅ Yes — intronic, intergenic, regulatory
+      <div class="cn-inline">✅ 可检测 — 内含子、基因间区、调控区</div></td>
+    <td>❌ No
+      <div class="cn-inline">❌ 无法检测</div></td>
+  </tr>
+  <tr>
+    <td>SV / large CNV detection</td>
+    <td>✅ Good
+      <div class="cn-inline">✅ 效果好</div></td>
+    <td>⚠️ Limited — only in exonic regions
+      <div class="cn-inline">⚠️ 受限 — 只能检测外显子区域</div></td>
+  </tr>
+  <tr>
+    <td>SNV/Indel in coding regions</td>
+    <td>✅ Good</td>
+    <td>✅ Good (higher depth → better sensitivity)
+      <div class="cn-inline">✅ 好（深度更高 → 灵敏度更好）</div></td>
+  </tr>
+  <tr>
+    <td>Best for</td>
+    <td>Comprehensive genomic analysis, research
+      <div class="cn-inline">全面基因组分析、科研</div></td>
+    <td>Clinical diagnostics, coding variant screening
+      <div class="cn-inline">临床诊断、编码区变异筛查</div></td>
+  </tr>
+</table>
+
+<h3>Running WES in sarek — What Changes?</h3>
+<div class="cn">在 sarek 中运行 WES — 只需改两个参数</div>
+
+<p>The pipeline is <strong>identical</strong> — only two extra parameters are needed:</p>
+<div class="cn">流程<strong>完全相同</strong> — 只需多加两个参数：</div>
+
+<table>
+  <tr>
+    <th>Parameter</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td><code>--wes</code></td>
+    <td>Enables WES-specific QC metrics (on-target rate, Picard CollectHsMetrics)
+      <div class="cn-inline">启用 WES 特有的 QC 指标（在靶率、Picard CollectHsMetrics）</div></td>
+  </tr>
+  <tr>
+    <td><code>--intervals targets.bed</code></td>
+    <td>Specifies capture kit target regions — restricts variant calling to these intervals
+      <div class="cn-inline">指定 capture kit 的 target 区域 — 将变异检测限定在这些区间内</div></td>
+  </tr>
+</table>
+
+<h3>Common Capture Kits</h3>
+<div class="cn">常用 Capture Kit 对照表 — BED 文件通常从厂商官网下载</div>
+
+<table>
+  <tr>
+    <th>Capture Kit</th>
+    <th>Vendor</th>
+    <th>Target Size</th>
+  </tr>
+  <tr>
+    <td>SureSelect Human All Exon V7</td>
+    <td>Agilent</td>
+    <td>~48 Mb</td>
+  </tr>
+  <tr>
+    <td>xGen Exome Research Panel v2</td>
+    <td>IDT</td>
+    <td>~34 Mb</td>
+  </tr>
+  <tr>
+    <td>Twist Human Core Exome</td>
+    <td>Twist Bioscience</td>
+    <td>~33 Mb</td>
+  </tr>
+  <tr>
+    <td>KAPA HyperExome</td>
+    <td>Roche</td>
+    <td>~43 Mb</td>
+  </tr>
+  <tr>
+    <td>Nextera Rapid Capture Exome</td>
+    <td>Illumina</td>
+    <td>~37 Mb</td>
+  </tr>
+</table>
+
+<h3>WES-Specific QC Metrics</h3>
+<div class="cn">WES 特有的质控指标 — 这些指标帮助判断 capture 效率和数据质量</div>
+
+<table>
+  <tr>
+    <th>Metric</th>
+    <th>What it measures</th>
+    <th>Expected value</th>
+  </tr>
+  <tr>
+    <td>On-target rate
+      <div class="cn-inline">在靶率</div></td>
+    <td>% reads falling within target regions
+      <div class="cn-inline">落在 target 区间的 reads 比例</div></td>
+    <td>&gt;70%</td>
+  </tr>
+  <tr>
+    <td>Fold-80 penalty</td>
+    <td>Coverage uniformity (closer to 1 = better)
+      <div class="cn-inline">覆盖均匀性（越接近 1 越好）</div></td>
+    <td>&lt;1.5</td>
+  </tr>
+  <tr>
+    <td>PCT_TARGET_BASES_20X</td>
+    <td>% target bases with ≥20× coverage
+      <div class="cn-inline">target 区域中 ≥20× 覆盖的碱基比例</div></td>
+    <td>&gt;90%</td>
+  </tr>
+  <tr>
+    <td>Mean target coverage
+      <div class="cn-inline">平均靶区覆盖深度</div></td>
+    <td>Average depth over target regions
+      <div class="cn-inline">target 区域的平均测序深度</div></td>
+    <td>100-200×</td>
+  </tr>
+</table>
 
 <hr>
 
