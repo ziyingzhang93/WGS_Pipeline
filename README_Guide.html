@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nf-core/sarek Pipeline Guide</title>
+<style>
+:root {
+  --primary: #2d6a4f;
+  --primary-light: #40916c;
+  --accent: #52b788;
+  --bg: #f8faf9;
+  --bg-card: #ffffff;
+  --bg-code: #f0f4f1;
+  --text: #1b4332;
+  --text-secondary: #5a7d6a;
+  --border: #d8e2dc;
+  --cn-bg: #fef9ef;
+  --cn-border: #e8c97a;
+  --cn-text: #6b5a2e;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* ── Toggle Button ── */
+.lang-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 100;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  transition: all 0.2s;
+}
+.lang-toggle:hover { background: var(--primary-light); transform: translateY(-1px); }
+.lang-toggle .icon { margin-right: 0.3rem; }
+
+/* ── Chinese text (hidden by default) ── */
+.cn {
+  display: none;
+  background: var(--cn-bg);
+  border-left: 3px solid var(--cn-border);
+  color: var(--cn-text);
+  padding: 0.5rem 0.8rem;
+  margin: 0.4rem 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.92em;
+  line-height: 1.6;
+}
+.cn.show { display: block; }
+
+/* inline Chinese for table cells */
+.cn-inline {
+  display: none;
+  color: var(--cn-text);
+  font-size: 0.88em;
+}
+.cn-inline.show { display: block; }
+
+/* ── Headers ── */
+h1 {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-bottom: 0.3rem;
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 0.5rem;
+}
+h1 .subtitle { font-size: 1rem; color: var(--text-secondary); font-weight: 400; }
+
+h2 {
+  font-size: 1.4rem;
+  color: var(--primary);
+  margin: 2.5rem 0 1rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--border);
+}
+
+h3 {
+  font-size: 1.15rem;
+  color: var(--primary-light);
+  margin: 1.5rem 0 0.6rem;
+}
+
+h4 { font-size: 1rem; margin: 1rem 0 0.4rem; }
+
+/* ── Paragraphs ── */
+p { margin: 0.6rem 0; }
+
+/* ── TOC ── */
+.toc {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.toc ol { padding-left: 1.2rem; }
+.toc li { margin: 0.3rem 0; }
+.toc a { color: var(--primary); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* ── Code & Pre ── */
+pre {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0.8rem 0;
+}
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88em;
+}
+p code, li code, td code {
+  background: var(--bg-code);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* ── Tables ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0;
+  font-size: 0.9rem;
+}
+th {
+  background: var(--primary);
+  color: #fff;
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  font-weight: 600;
+}
+td {
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:hover td { background: #f0f7f3; }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem;
+  margin: 0.8rem 0;
+}
+
+/* ── Feature list ── */
+.features { list-style: none; padding: 0; }
+.features li { padding: 0.3rem 0; }
+.features li::before { content: '✦ '; color: var(--accent); font-weight: bold; }
+
+/* ── Flowchart ── */
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  margin: 0.8rem 0;
+  gap: 0.8rem;
+}
+.flow-num {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.flow-content { flex: 1; }
+.flow-content strong { color: var(--primary-light); }
+.flow-arrow {
+  text-align: center;
+  color: var(--accent);
+  font-size: 1.2rem;
+  margin: 0.2rem 0 0.2rem 0.55rem;
+}
+
+/* ── Highlight box ── */
+.highlight-box {
+  background: #e8f5e9;
+  border-left: 4px solid var(--accent);
+  padding: 0.8rem 1rem;
+  border-radius: 0 8px 8px 0;
+  margin: 1rem 0;
+}
+
+.warning-box {
+  background: #fff8e1;
+  border-left: 4px solid #ffa000;
+  padding: 0.8rem 1rem;
+  border-radius: 0 8px 8px 0;
+  margin: 1rem 0;
+}
+
+/* ── Section divider ── */
+hr {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 2rem 0;
+}
+
+a { color: var(--primary); }
+a:hover { color: var(--primary-light); }
+</style>
+</head>
+<body>
+
+<button class="lang-toggle" onclick="toggleChinese()">
+  <span class="icon">中</span> Show Chinese
+</button>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TITLE -->
+<!-- ══════════════════════════════════════════════ -->
+<h1>
+  nf-core/sarek Pipeline Guide
+  <div class="subtitle">A Beginner-Friendly Walkthrough for Biomedical Researchers</div>
+</h1>
+<div class="cn">面向生物医学研究人员的零基础友好指南</div>
+
+<!-- TOC -->
+<nav class="toc">
+  <strong>Table of Contents</strong>
+  <div class="cn">目录</div>
+  <ol>
+    <li><a href="#what-is-sarek">What is sarek?</a></li>
+    <li><a href="#pipeline-overview">WGS Pipeline Overview</a></li>
+    <li><a href="#code-structure">Code Structure Guide</a></li>
+    <li><a href="#key-files">Key Files Quick Reference</a></li>
+    <li><a href="#core-concepts">Core Concepts Explained</a></li>
+    <li><a href="#biology-table">Biology Background Table</a></li>
+    <li><a href="#common-params">Common Parameters</a></li>
+    <li><a href="#three-modes">Three Variant Calling Modes</a></li>
+    <li><a href="#commands">Example Commands</a></li>
+  </ol>
+</nav>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 1. WHAT IS SAREK -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="what-is-sarek">1. What is sarek?</h2>
+
+<p>
+  <strong>In one sentence:</strong> nf-core/sarek is a complete WGS/WES variant calling pipeline — written in Nextflow — that takes raw sequencing data (FASTQ) and produces annotated variant calls (VCF) and quality reports in a single run.
+</p>
+<div class="cn">
+  <strong>一句话介绍：</strong>nf-core/sarek 是一个完整的全基因组/全外显子组测序变异检测流程，用 Nextflow 编写，可以从原始测序数据（FASTQ）一步到位产出注释好的变异结果（VCF）和质量报告。
+</div>
+
+<ul class="features">
+  <li><strong>End-to-end automation</strong> — FASTQ to annotated VCF in one command
+    <div class="cn-inline">端到端自动化 — 一条命令从FASTQ到注释VCF</div></li>
+  <li><strong>Multiple variant callers</strong> — HaplotypeCaller, DeepVariant, Mutect2, Manta, Strelka2, etc.
+    <div class="cn-inline">支持多种变异检测工具 — HaplotypeCaller、DeepVariant、Mutect2、Manta、Strelka2 等</div></li>
+  <li><strong>Efficient parallelization</strong> — splits genome into chunks for fast analysis
+    <div class="cn-inline">高效并行处理 — 将基因组分块处理，大幅加速分析</div></li>
+  <li><strong>Production-grade quality</strong> — maintained by the nf-core community, rigorously tested
+    <div class="cn-inline">生产级质量 — nf-core 社区维护，经过严格测试</div></li>
+  <li><strong>Highly portable</strong> — runs locally, on HPC clusters, or in the cloud (AWS/GCP)
+    <div class="cn-inline">可移植性强 — 支持本地、集群、云平台（AWS/GCP）运行</div></li>
+</ul>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 2. PIPELINE OVERVIEW -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="pipeline-overview">2. WGS Pipeline Overview</h2>
+
+<h3>Complete Pipeline Flowchart</h3>
+<div class="cn">完整流程图</div>
+
+<div class="flow-step">
+  <div class="flow-num">1</div>
+  <div class="flow-content">
+    <strong>Quality Control — FastQC</strong><br>
+    Assess sequencing quality and detect biases before processing.<br>
+    <em>Input:</em> FASTQ &nbsp;→&nbsp; <em>Output:</em> HTML QC report
+    <div class="cn">质量控制 — 在处理前评估测序质量，检测偏差。评估测序是否成功、数据质量如何。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">2</div>
+  <div class="flow-content">
+    <strong>Adapter Trimming — FASTP</strong><br>
+    Remove sequencing adapters and low-quality reads to clean the data.<br>
+    <em>Input:</em> FASTQ &nbsp;→&nbsp; <em>Output:</em> Cleaned FASTQ
+    <div class="cn">去接头 — 去除测序接头序列和低质量reads，清洁数据。接头是测序过程中人工引入的短序列。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">3</div>
+  <div class="flow-content">
+    <strong>Read Alignment — BWA-MEM / BWA-MEM2</strong><br>
+    Map each sequencing read to its location on the reference genome. Like matching puzzle pieces — find where each DNA fragment belongs.<br>
+    <em>Input:</em> FASTQ + Reference &nbsp;→&nbsp; <em>Output:</em> BAM file
+    <div class="cn">序列比对 — 将每条测序read比对到参考基因组的对应位置。就像拼拼图——找到每条DNA片段在基因组中的位置。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">4</div>
+  <div class="flow-content">
+    <strong>Mark Duplicates — MarkDuplicates</strong><br>
+    Identify and flag PCR duplicate reads. During library prep, some DNA fragments get amplified more than others — these duplicates can bias variant calling.<br>
+    <em>Input:</em> BAM &nbsp;→&nbsp; <em>Output:</em> Deduplicated BAM
+    <div class="cn">标记重复 — 识别并标记PCR重复reads。在建库过程中，某些DNA片段会被过度扩增——这些重复会导致变异检测产生偏差。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">5</div>
+  <div class="flow-content">
+    <strong>Base Quality Score Recalibration — BQSR</strong><br>
+    Correct systematic errors in the quality scores assigned by the sequencing machine using known variant databases (dbSNP, Mills, 1000G).<br>
+    <em>Input:</em> BAM &nbsp;→&nbsp; <em>Output:</em> Recalibrated BAM
+    <div class="cn">碱基质量校正 — 使用已知变异数据库（dbSNP、Mills、1000G）校正测序仪产生的系统性质量评分偏差。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">6</div>
+  <div class="flow-content">
+    <strong>Variant Calling — Multiple tools available</strong><br>
+    Detect genetic variants (SNPs, InDels, structural variants) from the aligned reads.
+    <ul style="margin:0.4rem 0 0 1rem;">
+      <li><strong>HaplotypeCaller</strong> — local reassembly + Bayesian inference (recommended for SNP/InDel)</li>
+      <li><strong>DeepVariant</strong> — deep learning CNN from pileup images (highest accuracy)</li>
+      <li><strong>Manta</strong> — structural variant detection (large rearrangements)</li>
+      <li><strong>Mutect2</strong> — somatic variant calling (tumor mutations)</li>
+    </ul>
+    <em>Output:</em> gVCF and VCF files
+    <div class="cn">
+      变异检测 — 从比对结果中检测遗传变异（SNP、InDel、结构变异）。<br>
+      · HaplotypeCaller — 局部重组装 + 贝叶斯推断（推荐用于SNP/InDel）<br>
+      · DeepVariant — 用CNN深度学习从reads堆叠图像推断（准确度最高）<br>
+      · Manta — 结构变异检测（大型基因组重排）<br>
+      · Mutect2 — 体细胞变异检测（肿瘤突变）
+    </div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">7</div>
+  <div class="flow-content">
+    <strong>Joint Genotyping — GenotypeGVCFs (optional)</strong><br>
+    Re-genotype all samples together to improve accuracy. Only needed when analyzing multiple samples as a cohort.<br>
+    <em>Input:</em> gVCF &nbsp;→&nbsp; <em>Output:</em> Merged VCF
+    <div class="cn">联合分型 — 将所有样本放在一起重新分型，提高准确度。仅在多样本队列分析时需要。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">8</div>
+  <div class="flow-content">
+    <strong>Variant Annotation — VEP / SnpEff</strong><br>
+    Annotate each variant with biological significance: coding/non-coding region, known databases (gnomAD, ClinVar), predicted impact (missense, frameshift, etc.).<br>
+    <em>Output:</em> Annotated VCF
+    <div class="cn">变异注释 — 标注每个变异的生物学意义：编码区/非编码区、已知数据库（gnomAD、ClinVar）、预测影响（错义突变、移码突变等）。</div>
+  </div>
+</div>
+<div class="flow-arrow">▼</div>
+
+<div class="flow-step">
+  <div class="flow-num">9</div>
+  <div class="flow-content">
+    <strong>Summary Report — MultiQC</strong><br>
+    Aggregate all QC metrics into a single interactive HTML report: alignment rate, coverage depth, variant counts and distribution.<br>
+    <em>Output:</em> Interactive HTML report
+    <div class="cn">质控总报告 — 汇总所有QC指标为一份交互式HTML报告：比对率、覆盖深度、变异数量和分布。</div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 3. CODE STRUCTURE -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="code-structure">3. Code Structure Guide</h2>
+
+<div class="cn">代码结构导读 — 告诉你每个文件夹放什么、看代码从哪里开始</div>
+
+<pre><code>sarek/
+├── workflows/sarek/main.nf        # Main orchestration (start here!)
+├── subworkflows/local/            # Reusable step collections
+│   ├── fastq_align/               #   Read alignment
+│   ├── fastq_preprocess_gatk/     #   Full preprocessing pipeline
+│   ├── bam_markduplicates/        #   Mark PCR duplicates
+│   ├── bam_baserecalibrator/      #   BQSR - create recal table
+│   ├── bam_applybqsr/             #   BQSR - apply recalibration
+│   ├── bam_variant_calling_*      #   Variant calling (one per tool)
+│   ├── vcf_annotate_all/          #   Annotation (VEP/SnpEff)
+│   └── ...
+├── modules/nf-core/               # Individual tool wrappers
+│   ├── gatk4/haplotypecaller/     #   HaplotypeCaller command
+│   ├── deepvariant/               #   DeepVariant command
+│   ├── bwa/mem/                   #   BWA-MEM command
+│   └── ...
+├── conf/                          # Configuration
+│   ├── modules/                   #   Per-tool parameter settings
+│   ├── base.config                #   Resource defaults (CPU/memory)
+│   └── test.config                #   Small test dataset config
+└── nextflow.config                # Global config entry point</code></pre>
+
+<div class="cn">
+  <strong>看代码的推荐顺序：</strong><br>
+  ① <code>workflows/sarek/main.nf</code> — 整体流程的"导演脚本"<br>
+  ② <code>subworkflows/local/fastq_preprocess_gatk/main.nf</code> — 预处理全流程<br>
+  ③ <code>subworkflows/local/bam_variant_calling_haplotypecaller/</code> — 变异检测步骤<br>
+  ④ <code>modules/nf-core/gatk4/haplotypecaller/main.nf</code> — 实际命令行代码
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 4. KEY FILES -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="key-files">4. Key Files Quick Reference</h2>
+
+<div class="cn">关键文件速查表</div>
+
+<table>
+  <tr>
+    <th>File</th>
+    <th>Purpose</th>
+    <th>When to look</th>
+  </tr>
+  <tr>
+    <td><code>workflows/sarek/main.nf</code></td>
+    <td>Main pipeline brain — orchestrates everything
+      <div class="cn-inline">主流程大脑 — 编排所有步骤</div></td>
+    <td>Understanding overall flow
+      <div class="cn-inline">想了解整体流程</div></td>
+  </tr>
+  <tr>
+    <td><code>subworkflows/local/fastq_preprocess_gatk/main.nf</code></td>
+    <td>Preprocessing: trim → align → dedup → BQSR
+      <div class="cn-inline">预处理：去接头→比对→去重→碱基校正</div></td>
+    <td>Understanding data preparation
+      <div class="cn-inline">想了解数据预处理步骤</div></td>
+  </tr>
+  <tr>
+    <td><code>subworkflows/local/bam_variant_calling_haplotypecaller/main.nf</code></td>
+    <td>HaplotypeCaller variant detection workflow
+      <div class="cn-inline">HaplotypeCaller变异检测子流程</div></td>
+    <td>Understanding variant calling logic
+      <div class="cn-inline">想理解变异检测原理</div></td>
+  </tr>
+  <tr>
+    <td><code>modules/nf-core/gatk4/haplotypecaller/main.nf</code></td>
+    <td>Actual HaplotypeCaller command and parameters
+      <div class="cn-inline">HaplotypeCaller实际命令和参数</div></td>
+    <td>Tuning parameters or debugging
+      <div class="cn-inline">需要调参或排故</div></td>
+  </tr>
+  <tr>
+    <td><code>conf/modules/*.config</code></td>
+    <td>Per-tool parameter configuration
+      <div class="cn-inline">每个工具的参数配置</div></td>
+    <td>Changing a tool's settings
+      <div class="cn-inline">想改某工具的参数</div></td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 5. CORE CONCEPTS -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="core-concepts">5. Core Concepts Explained</h2>
+
+<div class="cn">核心概念解释 — 用通俗语言解释Nextflow的关键术语</div>
+
+<h3>Channel (Data Stream)</h3>
+<div class="cn"><strong>数据流</strong> — 想象一条流水线上的传送带，样本就是传送带上的工件</div>
+
+<p>A <strong>channel</strong> is how data flows between steps. Think of it as a conveyor belt in a factory — samples move along automatically, and each workstation (process) picks up items, processes them, and sends them forward.</p>
+<div class="cn">Channel 是步骤之间传递数据的方式。想象工厂的传送带——样本自动移动，每个工位（process）取出物品、处理后送往下一站。关键点：Channel是异步的——不需要等一个样本完成才开始下一个，1000个样本可以同时处理。</div>
+
+<pre><code>workflow FASTQ_ALIGN {
+    take:
+    reads       // Input: FASTQ files arrive on this channel
+    index       // Input: reference genome index
+
+    main:
+    BWAMEM1_MEM(reads, index, sort)   // Process the data
+
+    emit:
+    bam = BWAMEM1_MEM.out.bam        // Output: BAM files leave on this channel
+}</code></pre>
+
+<h3>Process (Execution Unit)</h3>
+<div class="cn"><strong>执行单元</strong> — 一个独立的任务工作室，每次处理一个样本</div>
+
+<p>A <strong>process</strong> is the smallest execution unit — it wraps a single tool's command line. Each process runs in an isolated environment (Docker container or Conda) with defined CPU/memory limits.</p>
+<div class="cn">Process 是最小的执行单元——封装一个工具的命令行。每个process在隔离环境中运行（Docker容器或Conda），有明确的CPU/内存限制。</div>
+
+<pre><code>process GATK4_HAPLOTYPECALLER {
+    tag "$meta.id"            // Label: sample ID for log tracking
+    label 'process_low'       // Resources: low CPU & memory
+    container 'gatk4:...'     // Environment: Docker image with GATK4
+
+    input:
+    tuple val(meta), path(bam)        // Input: sample metadata + BAM file
+
+    output:
+    tuple val(meta), path("*.vcf.gz") // Output: sample metadata + VCF file
+
+    script:
+    """
+    gatk HaplotypeCaller --input $bam --output ${meta.id}.vcf.gz ...
+    """
+}</code></pre>
+
+<h3>Subworkflow (Reusable Step Collection)</h3>
+<div class="cn"><strong>子流程</strong> — 一个可复用的"小工厂"，把多个process组合成一套完整的工作步骤</div>
+
+<p>A <strong>subworkflow</strong> groups multiple processes into a reusable pipeline segment. For example, the <code>fastq_align</code> subworkflow bundles the alignment tool call, output handling, and version tracking into one clean unit.</p>
+<div class="cn">Subworkflow 将多个process组合成可复用的流程片段。例如 <code>fastq_align</code> 子流程把比对工具调用、输出处理和版本追踪打包成一个整洁的单元。</div>
+
+<h3>Meta Map (Sample Identity Card)</h3>
+<div class="cn"><strong>样本元信息</strong> — 每个样本的"身份证"，记录所有属性</div>
+
+<p>Every piece of data carries a <strong>meta map</strong> — a dictionary of sample attributes that travels with the file through the entire pipeline. This ensures you always know which sample a file belongs to.</p>
+<div class="cn">每条数据都携带一个meta map——一个包含样本属性的字典，伴随文件贯穿整个流程。确保你始终知道每个文件属于哪个样本。</div>
+
+<pre><code>[
+    id: 'patient1_tumor',       // Sample ID
+    patient: 'patient1',        // Patient ID
+    status: 1,                  // 0 = normal, 1 = tumor
+    sex: 'XX',                  // Sex
+    data_type: 'cram',          // File format
+    variantcaller: 'haplotypecaller'  // Tool used
+]</code></pre>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 6. BIOLOGY TABLE -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="biology-table">6. Biology Background Table</h2>
+
+<div class="cn">生物学背景对照表 — 每个分析步骤的生物学意义</div>
+
+<table>
+  <tr>
+    <th>Step</th>
+    <th>Biological Question</th>
+    <th>Tool</th>
+    <th>Significance</th>
+  </tr>
+  <tr>
+    <td>FastQC</td>
+    <td>Is the sequencing data good quality?
+      <div class="cn-inline">测序数据质量如何？</div></td>
+    <td>FastQC</td>
+    <td>Detects quality issues before investing compute time
+      <div class="cn-inline">在投入计算资源前发现质量问题</div></td>
+  </tr>
+  <tr>
+    <td>Trim</td>
+    <td>Which reads have artificial sequences?
+      <div class="cn-inline">哪些reads含有人工序列？</div></td>
+    <td>FASTP</td>
+    <td>Removes adapters that would cause false alignments
+      <div class="cn-inline">去除会导致错误比对的接头序列</div></td>
+  </tr>
+  <tr>
+    <td>Align</td>
+    <td>Where does each read come from in the genome?
+      <div class="cn-inline">每条read来自基因组哪个位置？</div></td>
+    <td>BWA-MEM</td>
+    <td>Maps reads to chromosomal coordinates
+      <div class="cn-inline">将reads定位到染色体坐标</div></td>
+  </tr>
+  <tr>
+    <td>MarkDup</td>
+    <td>Are these reads PCR artifacts?
+      <div class="cn-inline">这些reads是PCR人工产物吗？</div></td>
+    <td>MarkDuplicates</td>
+    <td>Prevents PCR bias from inflating variant evidence
+      <div class="cn-inline">防止PCR偏差夸大变异证据</div></td>
+  </tr>
+  <tr>
+    <td>BQSR</td>
+    <td>Are the base quality scores accurate?
+      <div class="cn-inline">碱基质量评分准确吗？</div></td>
+    <td>GATK BQSR</td>
+    <td>Corrects sequencer systematic errors using known variants
+      <div class="cn-inline">使用已知变异校正测序仪系统误差</div></td>
+  </tr>
+  <tr>
+    <td>Call</td>
+    <td>Is there a variant here? What type?
+      <div class="cn-inline">这里有变异吗？什么类型？</div></td>
+    <td>HC / DV / Manta</td>
+    <td>Identifies SNPs, InDels, and structural variants
+      <div class="cn-inline">识别SNP、InDel和结构变异</div></td>
+  </tr>
+  <tr>
+    <td>Annotate</td>
+    <td>What is the biological impact of this variant?
+      <div class="cn-inline">这个变异有什么生物学影响？</div></td>
+    <td>VEP / SnpEff</td>
+    <td>Predicts functional consequences (missense, frameshift, etc.)
+      <div class="cn-inline">预测功能后果（错义、移码等）</div></td>
+  </tr>
+</table>
+
+<h3>Key Biology Concepts</h3>
+<div class="cn">几个关键的生物学概念</div>
+
+<h4>SNP vs InDel</h4>
+<div class="cn">SNP（单核苷酸多态性）vs InDel（插入/缺失）</div>
+<pre><code>SNP: Single base change (most common variant type)
+ref:  A T G C C G
+alt:  A T <strong>A</strong> C C G    ← C→A substitution
+
+InDel: Insertion or deletion of bases
+ref:  A T G C C G
+alt:  A T G - - G    ← deletion of CC
+alt:  A T G C <strong>T C</strong> C G  ← insertion of TC</code></pre>
+
+<h4>Genotype Notation</h4>
+<div class="cn">基因型表示法</div>
+<table>
+  <tr><th>Genotype</th><th>Meaning</th></tr>
+  <tr><td><code>0/0</code></td><td>Homozygous reference — both chromosomes carry the reference base ("wild type")
+    <div class="cn-inline">纯合参考 — 两条染色体都是参考碱基（"野生型"）</div></td></tr>
+  <tr><td><code>0/1</code></td><td>Heterozygous — one reference, one variant allele (carrier)
+    <div class="cn-inline">杂合 — 一条参考，一条变异（携带者）</div></td></tr>
+  <tr><td><code>1/1</code></td><td>Homozygous alternate — both chromosomes carry the variant
+    <div class="cn-inline">纯合变异 — 两条染色体都是变异碱基</div></td></tr>
+</table>
+
+<h4>gVCF vs VCF</h4>
+<p><strong>VCF</strong> contains only variant sites. <strong>gVCF</strong> (Genomic VCF) includes all sites — even non-variant ones. Why? For multi-sample joint genotyping, you need to know "no variant was found here" to accurately assess consistency across samples.</p>
+<div class="cn">
+  VCF 只包含变异位点。gVCF（Genomic VCF）包含所有位点——包括没有变异的。为什么？做多样本联合分型时，需要知道"这里没有发现变异"，才能准确评估样本间的一致性。
+</div>
+
+<h4>Coverage Depth</h4>
+<div class="cn">覆盖深度</div>
+<table>
+  <tr><th>Depth</th><th>Meaning</th></tr>
+  <tr><td>&lt;5×</td><td>Unreliable — too few reads to confidently call variants
+    <div class="cn-inline">不可信 — reads太少，无法准确检测变异</div></td></tr>
+  <tr><td>20–100×</td><td>Good coverage — standard for WGS (30× is typical target)
+    <div class="cn-inline">良好覆盖 — WGS标准（30×是常用目标深度）</div></td></tr>
+  <tr><td>&gt;200×</td><td>Suspiciously high — may indicate repetitive region or contamination
+    <div class="cn-inline">异常高 — 可能是重复区域或污染</div></td></tr>
+</table>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 7. COMMON PARAMS -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="common-params">7. Common Parameters</h2>
+
+<div class="cn">常用参数说明 — 运行流程时最常调整的参数</div>
+
+<table>
+  <tr>
+    <th>Parameter</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><code>--input</code></td>
+    <td>—</td>
+    <td>Sample sheet CSV (required)
+      <div class="cn-inline">样本信息表CSV（必填）</div></td>
+  </tr>
+  <tr>
+    <td><code>--outdir</code></td>
+    <td><code>./results</code></td>
+    <td>Output directory
+      <div class="cn-inline">输出目录</div></td>
+  </tr>
+  <tr>
+    <td><code>--genome</code></td>
+    <td><code>GATK.GRCh38</code></td>
+    <td>Reference genome version
+      <div class="cn-inline">参考基因组版本（用hg37时改为 <code>GRCh37</code>）</div></td>
+  </tr>
+  <tr>
+    <td><code>--tools</code></td>
+    <td><code>null</code></td>
+    <td>Variant caller(s) to run: <code>haplotypecaller</code>, <code>deepvariant</code>, <code>mutect2</code>, etc.
+      <div class="cn-inline">要运行的变异检测工具</div></td>
+  </tr>
+  <tr>
+    <td><code>--step</code></td>
+    <td><code>mapping</code></td>
+    <td>Start from a specific step: <code>mapping</code>, <code>markduplicates</code>, <code>recalibrate</code>, <code>variant_calling</code>, <code>annotate</code>
+      <div class="cn-inline">从某个步骤开始（可跳过之前步骤）</div></td>
+  </tr>
+  <tr>
+    <td><code>--max_cpus</code></td>
+    <td><code>16</code></td>
+    <td>Maximum CPUs to use
+      <div class="cn-inline">最大CPU数（服务器CPU不够时减少）</div></td>
+  </tr>
+  <tr>
+    <td><code>--max_memory</code></td>
+    <td><code>128.GB</code></td>
+    <td>Maximum memory to allocate
+      <div class="cn-inline">最大内存（服务器内存不足时减少）</div></td>
+  </tr>
+  <tr>
+    <td><code>-resume</code></td>
+    <td>—</td>
+    <td>Resume from last checkpoint (use after interruption)
+      <div class="cn-inline">断点续跑（流程中断后使用）</div></td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 8. THREE MODES -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="three-modes">8. Three Variant Calling Modes</h2>
+
+<div class="cn">三种变异检测模式 — sarek根据样本类型自动选择分析路径</div>
+
+<div class="card">
+  <h3>A. Germline Mode — Most Common</h3>
+  <div class="cn"><strong>生殖系模式 — 最常用</strong></div>
+  <p><strong>Use case:</strong> Detecting inherited variants in a single individual. Used in population genetics, family studies, hereditary disease research.</p>
+  <div class="cn">适用场景：检测个体遗传变异。用于群体遗传学、家系研究、遗传性疾病研究。</div>
+  <p><strong>What it detects:</strong> Variants present in all cells (inherited from parents). Expected heterozygosity: ~50%.</p>
+  <div class="cn">检测内容：存在于所有细胞中的变异（从父母遗传）。预期杂合度约50%。</div>
+  <p><strong>Tools:</strong> <code>--tools haplotypecaller</code> or <code>--tools deepvariant</code></p>
+  <div class="highlight-box">
+    <strong>In the code:</strong> The main workflow checks <code>meta.status == 0</code> (normal sample) and routes to <code>BAM_VARIANT_CALLING_GERMLINE_ALL</code>.
+    <div class="cn">在代码中：主流程检查 <code>meta.status == 0</code>（正常样本），然后路由到 <code>BAM_VARIANT_CALLING_GERMLINE_ALL</code>。</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>B. Somatic Paired Mode — Cancer Research</h3>
+  <div class="cn"><strong>体细胞配对模式 — 癌症研究</strong></div>
+  <p><strong>Use case:</strong> Tumor + matched normal tissue from the same patient. Identifies mutations unique to the tumor (somatic mutations / driver mutations).</p>
+  <div class="cn">适用场景：同一患者的肿瘤 + 配对正常组织。识别肿瘤特有的突变（体细胞突变/驱动突变）。</div>
+  <p><strong>How it works:</strong> Compares tumor BAM vs normal BAM. Variants found only in the tumor are called somatic.</p>
+  <div class="cn">工作原理：比较肿瘤BAM和正常BAM。只在肿瘤中发现的变异被认定为体细胞突变。</div>
+  <p><strong>Tools:</strong> <code>--tools mutect2</code>, <code>strelka2</code>, <code>manta</code></p>
+  <div class="highlight-box">
+    <strong>In the code:</strong> The workflow uses <code>.cross()</code> to pair tumor (<code>status == 1</code>) with normal (<code>status == 0</code>) by patient ID, then routes to <code>BAM_VARIANT_CALLING_SOMATIC_ALL</code>.
+    <div class="cn">在代码中：流程使用 <code>.cross()</code> 按患者ID将肿瘤样本（status==1）和正常样本（status==0）配对，然后路由到 <code>BAM_VARIANT_CALLING_SOMATIC_ALL</code>。</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>C. Tumor-Only Mode — Clinical Diagnostics</h3>
+  <div class="cn"><strong>仅肿瘤模式 — 临床诊断</strong></div>
+  <p><strong>Use case:</strong> Only tumor sample available, no matched normal. Common in clinical settings where cost is a concern.</p>
+  <div class="cn">适用场景：只有肿瘤样本，没有配对正常对照。常见于成本受限的临床场景。</div>
+  <div class="warning-box">
+    <strong>Limitation:</strong> Cannot distinguish inherited variants from somatic mutations without a normal control. Requires stricter filtering (population frequency databases like gnomAD are essential).
+    <div class="cn"><strong>限制：</strong>没有正常对照无法区分遗传变异和体细胞突变。需要更严格的过滤（群体频率数据库如gnomAD不可或缺）。</div>
+  </div>
+  <p><strong>Tools:</strong> <code>--tools mutect2</code></p>
+  <div class="highlight-box">
+    <strong>In the code:</strong> Tumor samples with no matched normal are identified via <code>.filter { !(it.last()) }</code> and routed to <code>BAM_VARIANT_CALLING_TUMOR_ONLY_ALL</code>.
+    <div class="cn">在代码中：没有配对正常的肿瘤样本通过 <code>.filter { !(it.last()) }</code> 识别，路由到 <code>BAM_VARIANT_CALLING_TUMOR_ONLY_ALL</code>。</div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 9. COMMANDS -->
+<!-- ══════════════════════════════════════════════ -->
+<h2 id="commands">9. Example Commands</h2>
+
+<div class="cn">工作流执行命令示例</div>
+
+<h3>Basic Germline Analysis</h3>
+<div class="cn">基础生殖系分析</div>
+<pre><code>nextflow run nf-core/sarek \
+  --input samplesheet.csv \
+  --genome GATK.GRCh38 \
+  --tools haplotypecaller \
+  --outdir results/ \
+  -profile docker</code></pre>
+
+<h3>Germline with DeepVariant (higher accuracy)</h3>
+<div class="cn">使用DeepVariant的生殖系分析（更高准确度）</div>
+<pre><code>nextflow run nf-core/sarek \
+  --input samplesheet.csv \
+  --genome GATK.GRCh38 \
+  --tools deepvariant \
+  --outdir results/ \
+  -profile docker</code></pre>
+
+<h3>Somatic Paired Analysis (cancer)</h3>
+<div class="cn">配对体细胞分析（癌症）</div>
+<pre><code>nextflow run nf-core/sarek \
+  --input samplesheet.csv \
+  --genome GATK.GRCh38 \
+  --tools mutect2,manta,strelka2 \
+  --outdir results/ \
+  -profile docker</code></pre>
+
+<h3>Resume after interruption</h3>
+<div class="cn">中断后断点续跑</div>
+<pre><code>nextflow run nf-core/sarek \
+  --input samplesheet.csv \
+  --tools haplotypecaller \
+  -resume</code></pre>
+
+<h3>Quick test with small dataset</h3>
+<div class="cn">用小数据集快速测试</div>
+<pre><code>nextflow run nf-core/sarek -profile docker,test</code></pre>
+
+<hr>
+
+<h2>Further Reading</h2>
+<div class="cn">进阶阅读</div>
+<ul>
+  <li><a href="https://github.com/nf-core/sarek" target="_blank">sarek GitHub repository</a></li>
+  <li><a href="https://nf-co.re/sarek" target="_blank">sarek official documentation</a></li>
+  <li><a href="https://gatk.broadinstitute.org/hc/en-us" target="_blank">GATK Best Practices</a></li>
+  <li><a href="https://www.nextflow.io/docs/latest/" target="_blank">Nextflow documentation</a></li>
+</ul>
+
+<br><br>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- JAVASCRIPT: Language Toggle -->
+<!-- ══════════════════════════════════════════════ -->
+<script>
+let cnVisible = false;
+
+function toggleChinese() {
+    cnVisible = !cnVisible;
+    const btn = document.querySelector('.lang-toggle');
+    const cnElements = document.querySelectorAll('.cn, .cn-inline');
+
+    cnElements.forEach(el => {
+        if (cnVisible) {
+            el.classList.add('show');
+        } else {
+            el.classList.remove('show');
+        }
+    });
+
+    btn.innerHTML = cnVisible
+        ? '<span class="icon">EN</span> Hide Chinese'
+        : '<span class="icon">中</span> Show Chinese';
+}
+</script>
+
+</body>
+</html>
